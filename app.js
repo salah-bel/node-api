@@ -3,96 +3,67 @@ const app = express()
 const path = require('path')
 const ejs = require('ejs')
 const bodyParser = require('body-parser')
+const mysql = require('mysql2')
 
 //midlewares
 app.use(express.static(path.join(__dirname, 'public')))
 app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({ extended: true }))
 
+//database connection
+const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'root', // POUR MOI C'EST ROOT
+    database: 'mean'
+})
 
-
-// DATA
-const drivers = [
-    {
-      id: 1,
-      fullName: "ken block",
-      pays: "usa",
-      coverImage: "assets/images/drivers/kenblock.jpg",
-      category: "gymkhana",
-      likeIts: -1
-    },
-    {
-      id: 2,
-      fullName: "danIca patricK",
-      pays: "usa",
-      coverImage: "assets/images/drivers/danicapatrick.jpg",
-      category: "nascar",
-      likeIts: 0
-    },
-    {
-      id: 3,
-      fullName: "sebastien loeb",
-      pays: "france",
-      coverImage: "assets/images/drivers/Loeb.jpg",
-      category: "rallye",
-      likeIts: 1
-    },
-    {
-      id: 4,
-      fullName: "molly taylor",
-      pays: "australie",
-      coverImage: "assets/images/drivers/mollytaylor.jpg",
-      category: "rallye",
-      likeIts: -1
-    },
-    {
-      id: 5,
-      fullName: "collin mcrae",
-      pays: "écosse",
-      coverImage: "assets/images/drivers/colin.jpg",
-      category: "rallye",
-      likeIts: 0
-    },
-    {
-      id: 6,
-      fullName: "shirley muldowney",
-      pays: "usa",
-      coverImage: "assets/images/drivers/shirleymuldowney.jpg",
-      category: "drag",
-      likeIts: 5
-    },
-    {
-      id: 7,
-      fullName: "michael schumacher",
-      pays: "allemagne",
-      coverImage: "assets/images/drivers/schumacher.jpg",
-      category: "formule 1",
-      likeIts: 0
-    },
-    {
-      id: 8,
-      fullName: "erica enders",
-      pays: "usa",
-      coverImage: "assets/images/drivers/ericaenders.jpg",
-      category: "drag",
-      likeIts: 0
-    },
-    {
-      id: 9,
-      fullName: "valentino rossi",
-      pays: "italia",
-      coverImage: "assets/images/drivers/rossi.jpg",
-      category: "drag",
-      likeIts: 0
-    },
-  ];
 
 // ROUTES
-app.get('/drivers', function (req, res) {
-    res.render('drivers', {
-        drivers: drivers,
-        title:"*Drivers*"})
+app.get('/', function (req, res) {
+    connection.execute(
+        'SELECT * FROM `driver_info` ', (err, data)=>{
+            if(err) throw err;
+            // si tout va bien 
+            // res.json(data) // angular
+            res.render('drivers', {
+                title:'Drivers',
+                drivers : data
+            })
+            
+        }
+        );
+
+   
 })
+
+// route pour afficher le formulaire pour ajouter un driver
+app.get('/new-driver', (req,res)=>{
+    res.render('new-driver')
+})
+// route pour ajouter un driver dans la base de donnée
+app.post('/new-driver', (req,res)=>{
+    console.log(req.body)
+    // let fullName = req.body.fullName
+    // let pays = req.body.pays
+    // let coverImage = req.body.coverImage
+    // let category = req.body.category
+    // let likeIts = 0
+
+    connection.execute(`INSERT INTO driver_info(fullName,pays,coverImage,category,likeIts) 
+                        VALUES('${req.body.fullName}','${req.body.pays}', '${req.body.coverImage}', '${req.body.category}', '0')`,
+     (err)=>{
+        //si y a err affiche la
+        if(err) throw err;
+        // redirection vers la page d'accueil
+        res.redirect('/')
+     })
+})
+
+
+
+
+
 
 // SERVER
 app.listen(3000, ()=>{
